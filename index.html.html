@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diablo IV Damage Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #111; color: #eee; padding: 20px; }
+        input, label, select, textarea { margin: 5px 0; display: block; }
+        .section { margin-bottom: 20px; }
+        .output { font-weight: bold; color: #4caf50; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Diablo IV Damage Calculator</h1>
+
+    <div class="section">
+        <label>Class:
+            <select id="characterClass" onchange="adjustForm()">
+                <option value="barbarian">Barbarian</option>
+                <option value="rogue">Rogue</option>
+                <option value="sorcerer">Sorcerer</option>
+                <option value="necromancer">Necromancer</option>
+                <option value="druid">Druid</option>
+<option value="spiritborn">Spiritborn</option>
+            </select>
+        </label>
+    </div>
+
+    <div class="section">
+        <label>Weapon Damage: <input type="number" id="weaponDamage" value="662"></label>
+        <label>Skill Coefficient: <input type="number" id="skillCoefficient" value="2.4" step="0.1"></label>
+    </div>
+
+    <div class="section">
+        <label>Additive Bonus (%): <input type="number" id="additiveBonus" value="2500"></label>
+    </div>
+
+    <div class="section">
+        <label>Crit Chance (%): <input type="number" id="critChance" value="50.8"></label>
+        <label>Crit Damage (%): <input type="number" id="critDamage" value="2435.9"></label>
+    </div>
+
+    <div class="section">
+        <label>Vulnerable Bonus (%): <input type="number" id="vulnerableBonus" value="263"></label>
+    </div>
+
+    <div class="section" id="agilitySection" class="hidden">
+        <label>Agility: <input type="number" id="agility" value="2000"></label>
+    </div>
+
+    <div class="section" id="strengthSection">
+        <label>Strength: <input type="number" id="strength" value="2177"></label>
+    </div>
+
+    <div class="section" id="dexteritySection" class="hidden">
+        <label>Dexterity: <input type="number" id="dexterity" value="2000"></label>
+    </div>
+
+    <div class="section" id="intelligenceSection" class="hidden">
+        <label>Intelligence: <input type="number" id="intelligence" value="2000"></label>
+    </div>
+
+    <div class="section" id="willpowerSection" class="hidden">
+        <label>Willpower: <input type="number" id="willpower" value="2000"></label>
+    </div>
+
+    <div class="section">
+        <label>Multiplicative Modifiers (x values, comma-separated):</label>
+        <textarea id="multipliers" rows="4" cols="50">4.41,1.55,2.0,2.12,1.96,1.83,1.48</textarea>
+    </div>
+
+    <button onclick="calculateDamage()">Calculate Damage</button>
+
+    <div class="output">
+        <p id="result"></p>
+    </div>
+
+    <script>
+        function adjustForm() {
+            const cls = document.getElementById("characterClass").value;
+            document.getElementById("strengthSection").style.display = cls === "barbarian" ? "block" : "none";
+            document.getElementById("dexteritySection").style.display = cls === "rogue" ? "block" : "none";
+            document.getElementById("intelligenceSection").style.display = cls === "sorcerer" || cls === "necromancer" ? "block" : "none";
+            document.getElementById("willpowerSection").style.display = cls === "druid" ? "block" : "none";
+            document.getElementById("agilitySection").style.display = cls === "spiritborn" ? "block" : "none";
+        }
+
+        function calculateDamage() {
+            const weaponDamage = parseFloat(document.getElementById('weaponDamage').value);
+            const skillCoefficient = parseFloat(document.getElementById('skillCoefficient').value);
+            const additiveBonus = parseFloat(document.getElementById('additiveBonus').value) / 100;
+            const critChance = parseFloat(document.getElementById('critChance').value) / 100;
+            const critDamage = parseFloat(document.getElementById('critDamage').value) / 100;
+            const vulnerableBonus = parseFloat(document.getElementById('vulnerableBonus').value) / 100;
+            const multipliers = document.getElementById('multipliers').value.split(',').map(x => parseFloat(x.trim()));
+            const cls = document.getElementById("characterClass").value;
+
+            let mainStat = 0;
+            if (cls === "barbarian") {
+                mainStat = parseFloat(document.getElementById('strength').value);
+            } else if (cls === "rogue") {
+                mainStat = parseFloat(document.getElementById('dexterity').value);
+            } else if (cls === "sorcerer" || cls === "necromancer") {
+                mainStat = parseFloat(document.getElementById('intelligence').value);
+            } else if (cls === "druid") {
+                mainStat = parseFloat(document.getElementById("willpower").value);
+            } else if (cls === "spiritborn") {
+                mainStat = parseFloat(document.getElementById("agility").value);
+                mainStat = parseFloat(document.getElementById('willpower').value);
+            }
+
+            let baseDamage = weaponDamage * skillCoefficient;
+            let additiveDamage = baseDamage * (1 + additiveBonus);
+            let critMult = 1 + (critChance * critDamage);
+            let critDamageTotal = additiveDamage * critMult;
+            let vulnerableDamage = critDamageTotal * (1 + vulnerableBonus);
+            let mainStatMultiplier = 1 + (mainStat * 0.001);
+            let mainStatDamage = vulnerableDamage * mainStatMultiplier;
+
+            let finalDamage = mainStatDamage;
+            multipliers.forEach(mult => {
+                finalDamage *= mult;
+            });
+
+            document.getElementById('result').innerText = `Estimated Final Damage: ${Math.round(finalDamage).toLocaleString()}`
+        }
+
+        window.onload = adjustForm;
+    </script>
+</body>
+</html>
