@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diablo IV Season 9 – Damage Calculator</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f2f2f2;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1, h2 {
+      color: #8efeff;
+    }
+    .container {
+      max-width: 1024px;
+      margin: auto;
+    }
+    .section {
+      margin: 2rem 0;
+      background: #1e1e1e;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    label {
+      margin-top: 1rem;
+      display: block;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      background: #2a2a2a;
+      border: 1px solid #555;
+      color: #fff;
+      border-radius: 4px;
+    }
+    .grid-6 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #8efeff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #result {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+      color: #00ff99;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Diablo IV – Season 9 Damage Calculator</h1>
+
+    <div class="section">
+      <label for="class-select">Choose Class</label>
+      <select id="class-select" onchange="populateSkills()">
+        <option value="">-- Select --</option>
+        <option>Barbarian</option>
+        <option>Sorcerer</option>
+        <option>Rogue</option>
+        <option>Druid</option>
+        <option>Necromancer</option>
+        <option>Spiritborn</option>
+      </select>
+
+      <h2>Active Skills (6 Slots)</h2>
+      <div class="grid-6">
+        <div><label>Skill 1</label><select id="skill1"></select></div>
+        <div><label>Skill 2</label><select id="skill2"></select></div>
+        <div><label>Skill 3</label><select id="skill3"></select></div>
+        <div><label>Skill 4</label><select id="skill4"></select></div>
+        <div><label>Skill 5</label><select id="skill5"></select></div>
+        <div><label>Skill 6</label><select id="skill6"></select></div>
+      </div>
+
+      <label for="passives">Passives (Select multiple)</label>
+      <select id="passives" multiple size="6"></select>
+    </div>
+
+    <div class="section">
+      <h2>Gear & Inventory</h2>
+      <div class="grid-6">
+        <div><label>Helmet</label><input placeholder="e.g. +5.0% Crit Chance" /></div>
+        <div><label>Chest</label><input placeholder="e.g. +12.5% DR vs. Elites" /></div>
+        <div><label>Gloves</label><input placeholder="e.g. +20% Attack Speed" /></div>
+        <div><label>Pants</label><input placeholder="e.g. +% DoT Duration" /></div>
+        <div><label>Boots</label><input placeholder="e.g. +% Movement Speed" /></div>
+        <div><label>Main Weapon</label><input placeholder="e.g. +% Core Skill Damage" /></div>
+        <div><label>Off-hand / Alt</label><input placeholder="e.g. +% Overpower Damage" /></div>
+        <div><label>Two-Handed</label><input placeholder="e.g. +% Bleeding Damage" /></div>
+        <div><label>Ring 1</label><input placeholder="e.g. +% Lucky Hit Chance" /></div>
+        <div><label>Ring 2</label><input placeholder="e.g. +% Crit Damage" /></div>
+        <div><label>Amulet</label><input placeholder="e.g. Aspect ×1.5 Multiplier" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Horadric Spellcraft</h2>
+      <label for="catalyst">Catalyst</label>
+      <input id="catalyst" placeholder="e.g. +7.2% Elemental Boost" />
+      <label for="infusion">Infusion</label>
+      <input id="infusion" placeholder="e.g. +9.1% Bleed" />
+      <label for="arcana">Arcana</label>
+      <input id="arcana" placeholder="e.g. +5% Crit Scaling" />
+    </div>
+
+    <div class="section">
+      <h2>Damage Buckets</h2>
+      <label for="dot">Damage over Time Bonus (%)</label>
+      <input type="number" id="dot" value="0" />
+      <label for="crit">Critical Multiplier</label>
+      <input type="number" id="crit" value="1.5" step="0.1" />
+      <label for="vuln">Vulnerable Multiplier</label>
+      <input type="number" id="vuln" value="1.2" step="0.1" />
+    </div>
+
+    <div class="section">
+      <button onclick="calculate()">Calculate Final Damage</button>
+      <div id="result">Final Damage: —</div>
+    </div>
+  </div>
+
+  <script>
+    const skillLibrary = {
+      Barbarian: ["Bash", "Flay", "Upheaval", "Rupture", "Iron Skin", "Challenging Shout"],
+      Sorcerer: ["Fire Bolt", "Frozen Orb", "Teleport", "Blizzard", "Ice Armor", "Chain Lightning"],
+      Rogue: ["Puncture", "Rapid Fire", "Dash", "Poison Trap", "Shadow Step", "Death Trap"],
+      Druid: ["Storm Strike", "Pulverize", "Hurricane", "Grizzly Rage", "Landslide", "Wolves"],
+      Necromancer: ["Reap", "Bone Spear", "Corpse Explosion", "Blood Mist", "Iron Maiden", "Army of the Dead"],
+      Spiritborn: ["Soulrend", "Dance of Knives", "Jungle Surge", "Gorilla Bond", "Exalted Hunter", "Shadow Tendrils"]
+    };
+
+    function populateSkills() {
+      const selectedClass = document.getElementById("class-select").value;
+      const skillSet = skillLibrary[selectedClass] || [];
+
+      for (let i = 1; i <= 6; i++) {
+        const skillDropdown = document.getElementById("skill" + i);
+        skillDropdown.innerHTML = "";
+        skillSet.forEach(skill => {
+          const option = document.createElement("option");
+          option.value = skill;
+          option.textContent = skill;
+          skillDropdown.appendChild(option);
+        });
+      }
+
+      const passives = document.getElementById("passives");
+      passives.innerHTML = "";
+      skillSet.forEach(skill => {
+        const opt = document.createElement("option");
+        opt.value = skill + " Passive";
+        opt.textContent = skill + " Passive";
+        passives.appendChild(opt);
+      });
+    }
+
+    function calculate() {
+      const dot = parseFloat(document.getElementById("dot").value) || 0;
+      const crit = parseFloat(document.getElementById("crit").value) || 1;
+      const vuln = parseFloat(document.getElementById("vuln").value) || 1;
+      const base = 1000;
+      const total = base * (1 + dot / 100) * crit * vuln;
+      document.getElementById("result").innerText = "Final Damage: " + Math.round(total);
+    }
+  </script>
+</body>
+</html>
